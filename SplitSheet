@@ -1,0 +1,50 @@
+Sub SplitSheet()
+    Dim ws As Worksheet
+    Dim newWS As Worksheet
+    Dim lastRow As Long
+    Dim i As Long, j As Long
+    Dim uniqueValues As Variant
+    
+    ' Change "Sheet1" to the name of your sheet
+    Set ws = ThisWorkbook.Sheets("Sheet1")
+    
+    ' Change "A" to the column letter where you want to split
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+    
+    ' Get unique values from the specified column
+    uniqueValues = WorksheetFunction.Transpose(ws.Range("A2:A" & lastRow).Value)
+    uniqueValues = FilterUnique(uniqueValues)
+    
+    ' Loop through unique values and create new sheets
+    For i = LBound(uniqueValues) To UBound(uniqueValues)
+        ' Create a new worksheet for each unique value
+        Set newWS = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+        newWS.Name = uniqueValues(i)
+        
+        ' Copy headers from original sheet
+        For j = 1 To ws.Columns.Count
+            newWS.Cells(1, j).Value = ws.Cells(1, j).Value
+        Next j
+        
+        ' Copy rows with matching value to new sheet
+        For j = 2 To lastRow
+            If ws.Cells(j, "A").Value = uniqueValues(i) Then
+                ws.Rows(j).Copy newWS.Rows(newWS.Cells(newWS.Rows.Count, "A").End(xlUp).Row + 1)
+            End If
+        Next j
+    Next i
+End Sub
+
+Function FilterUnique(arr As Variant) As Variant
+    Dim dict As Object
+    Set dict = CreateObject("Scripting.Dictionary")
+    
+    Dim i As Long
+    For i = LBound(arr) To UBound(arr)
+        If Not dict.exists(arr(i)) Then
+            dict(arr(i)) = arr(i)
+        End If
+    Next i
+    
+    FilterUnique = dict.keys
+End Function
